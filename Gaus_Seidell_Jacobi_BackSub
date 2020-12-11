@@ -1,0 +1,136 @@
+import numpy as np
+from numpy.linalg import inv
+from numpy.linalg import norm
+import pandas as pd
+import scipy.sparse as sp
+import matplotlib.pyplot as plt
+
+####################################################################################################################################
+
+#Backsub stitution funksjon fra Oblig 2
+
+def backU(U,b,N):
+    '''Takes in triangular matrix U, vector b and dimention of matrix n
+    computes x from matrix equation Ax=b troughout nested backsubstitution'''
+
+    x_computed = np.zeros(N)
+    for i in range(N - 1, -1, -1):                  # itererer over matrisen vertikalt
+        x_tmp = b[i]                                # henter ut siste kjente x
+
+        for j in range(N - 1, i, -1):               # iterer over kollonene for neste x gitt x_temp = kollonens b
+            x_tmp =x_tmp - x_computed[j] * U[i, j]  # beregner neste x
+
+        x_computed[i] = x_tmp / U[i, i]
+    return x_computed
+
+####################################################################################################################################
+
+#modifisert Jacobi Method fra Oblig 2
+
+def jacobi(A, x, b, n):
+    '''Takes in matrix A, initial guess vector x and result vector b from equation Ax=b, and 
+    number of max iterations n diagonalise matrix and conducts Jacobi method. 
+    Returnes pandas dataframe with approximated x (X_c), norm of x (x_norm) and error_norm (e_norm)'''
+    
+    D =  np.diag(np.diag(A))
+    U = np.triu(A)-D
+    L = np.tril(A)-D
+    LU = L+U
+    
+    x_iter = []    
+    e_norm = []
+    x_norm = []
+
+    for i in range(n):
+        x = np.dot(inv(D), (b - np.dot(LU,x)))
+        x_iter.append(x)
+        e = abs(np.dot(A,x)-b)
+        e_norm.append(norm(e, np.inf))
+        x_norm.append(norm(x, np.inf))
+        
+    df = pd.DataFrame({'X_c': x_iter, 'e_norm': e_norm, 'x_norm': x_norm})
+    return df
+
+####################################################################################################################################
+
+#modifisert Gaus-Seidell fra Oblig 2
+
+def gaus_seidel_backsub(A, x, b, n):
+    '''Takes in matrix A, initial guess vector x and result vector b from equation Ax=b, and 
+    number of max iterations n diagonalise matrix and conducts Gaus-Seidell itteration method. 
+    Returnes pandas dataframe with approximated x (X_c), norm of x (x_norm) and error_norm (e_norm)'''
+    
+    D =  np.diag(np.diag(A))
+    U = np.triu(A)
+    L = np.tril(A)-D
+    x_iter = []
+    x_norm = []
+    e_norm = []
+    for i in range(n):
+
+        x_new = backU(U= U, b= (b-np.dot(L,x)), N= A.shape[0])
+        x_iter.append(x_new)
+        x = x_new
+        e = abs(np.dot(A,x_new)-b)
+
+        
+        e_norm.append(norm(e, np.inf))
+        x_norm.append(norm(x_new, np.inf))
+
+        
+    df = pd.DataFrame({'X_c': x_iter, 'e_norm': e_norm, 'x_norm': x_norm})
+    return df
+
+####################################################################################################################################
+
+#example diagonal dominant matrix
+
+A = np.array([[3,1,-1],[2,4,1],[-1,2,-5]])
+b = np.array([4,1,1])
+x0 = np.array([0,0,0])
+
+####################################################################################################################################
+
+gaus_seidel_backsub(A,b,x0,n=50)
+
+####################################################################################################################################
+
+jacobi(A,b,x0,n=50)
+
+####################################################################################################################################
+
+#plot of e_norm
+
+gaus_seidel_backsub(A,b,x0,n=30)['e_norm']
+
+plt.figure('Gaus-Seidell og jacobi')
+
+plt.subplot()
+plt.plot(gaus_seidel_backsub(A,b,x0,n=30)['e_norm'], label = 'GS')
+plt.plot(jacobi(A,b,x0,n=30)['e_norm'], label = 'Jacobi')
+plt.grid(True)
+plt.yscale('log')
+
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+
+plt.show()
+
+####################################################################################################################################
+
+#plot of x_norm
+
+gaus_seidel_backsub(A,b,x0,n=30)['e_norm']
+
+plt.figure('Gaus-Seidell og jacobi')
+
+plt.subplot()
+plt.plot(gaus_seidel_backsub(A,b,x0,n=30)['x_norm'], label = 'GS')
+plt.plot(jacobi(A,b,x0,n=30)['x_norm'], label = 'Jacobi')
+plt.grid(True)
+plt.yscale('log')
+
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+
+plt.show()
+
+####################################################################################################################################
