@@ -1,0 +1,31 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#eulers metode laget til ukesopgave uke 9
+def Euler_ODE_solver(f, w0, t0, tn, h):
+
+    wi =[]
+    ti=[]
+
+    for t in np.arange(t0,tn+h,h):
+
+        w= w0+h*f(t,w0)
+        w0=w
+        ti.append(t)
+        wi.append(w)
+
+
+    return pd.DataFrame({'ti':ti, 'wi':wi})
+
+
+f=lambda t,y : (t*y)+(t**3)
+y0=1
+h=0.2
+
+df = Euler_ODE_solver(f=f,w0=y0,t0=0,tn=1, h=h)
+print(df)
+
+plt.figure('eulers')
+plt.plot(df['ti'],df['wi'])
+plt.show()
