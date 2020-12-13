@@ -1,0 +1,83 @@
+import pandas as pd
+from math import exp
+
+
+f = lambda x: x**4+3*x**2+x-1
+Dfdx = lambda x:4*x**3+6*x+1
+
+tol = 0.5e-10
+
+
+
+x0 = 1
+x1 = 2
+
+#Modifisert utgave av halverings metoden brukt i oblig 1
+def bisection_method(f, a, b, tol = 0.5e-4):
+    '''Tar inn funksjon f, start intervall [a,b] og ønsket nøyaktighet (stop kriterie).
+    tester om det finnes røtter innenfor ingervall med skjærings sentingen f(a)xf(b) < 0.
+    gitt det finnes røtter halverer den inervallet til (a-b)/2 > tol. Returnerer pandas DataFrame
+    med iterasjoner og næyaktighet per iterasjon'''
+
+    if f(a)*f(b) > 0:
+        print('No roots on this intervall. Try a new guess')
+    else:
+
+        approx_root = []
+        accuracy = []
+        a = a
+        b = b
+        while (b - a) / 2.0 > tol:
+            c = (a + b) / 2.0
+            accuracy.append(abs(f(c)))
+            approx_root.append(c)
+            if f(a) * f(c) < 0:
+                b = c
+            else:
+                a = c
+
+
+        return pd.DataFrame({'Bisection Approximated root': approx_root,  'f(c) - [accuracy of root]': accuracy})
+
+test = bisection_method(f = lambda x: (0.5*exp(-2*x))-2, a = -1, b = 0, tol = 0.5e-8)
+
+def sekant_method(f, x0, x1 = None, tol = 0.5e-4):
+
+    approx_root = []
+    accuracy = []
+
+    while abs((x1 - (x1 - x0) / (f(x1) - f(x0)) * f(x1)) - x1) > tol:
+        x_new = x1 - (x1 - x0) / (f(x1) - f(x0)) * f(x1)
+        accuracy.append(abs(f(x_new)))
+        approx_root.append(x_new)
+
+        x0 = x1
+        x1 = x_new
+
+    return pd.DataFrame({'Sekant Approximated root': approx_root, 'f(c) - [accuracy of root]': accuracy})
+
+def newtons_method(f, fprime, x0, tol = 0.5e-4):
+
+    approx_root = []
+    accuracy = []
+
+    while abs((x0 - f(x0) / fprime(x0)) - x0) > tol:
+        x_new = x0 - f(x0) / fprime(x0)
+        accuracy.append(abs(f(x_new)))
+        approx_root.append(x_new)
+        x0 = x_new
+
+
+    return pd.DataFrame({'Newtons Approximated root': approx_root, 'f(c) - [accuracy of root]': accuracy})
+bisection_test = bisection_method(f=f, a=0, b= 1, tol= (0.5*10**(-20)))
+newton_test = newtons_method(f = f, fprime=Dfdx, x0=x0, tol = (0.5*10**(-20)))
+sekant_test = sekant_method(f = f, x0=x0, x1 = x1, tol = (0.5*10**(-20)))
+
+
+print(bisection_test)
+print('')
+print('')
+print(newton_test)
+print('')
+print('')
+print(sekant_test)
